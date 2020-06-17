@@ -66,7 +66,7 @@ module.exports = function TrueEverfulNostrum(m) {
 	})
 	m.hook('S_SPAWN_ME', 3, e => { nostrum(!(alive = e.alive)) })
 	m.hook('S_CREATURE_LIFE', 3, e => {
-		if(e.gameId.equals(gameId) && alive != e.alive) {
+		if((e.gameId == gameId) && alive != e.alive) {
 			nostrum(!(alive = e.alive))
 
 			if(!alive) {
@@ -85,7 +85,7 @@ module.exports = function TrueEverfulNostrum(m) {
 	m.hook('S_CANCEL_CONTRACT', 1, contract.bind(null, false))
 
 	function abnormality(type, e) {
-		if(e.target.equals(gameId) && (e.id == BUFF_NOSTRUM)) {
+		if((e.target == gameId) && (e.id == BUFF_NOSTRUM)) {
 			nextUse = type == 'S_ABNORMALITY_END' ? 0 : Date.now() + Math.floor(e.duration / 2)
 			nostrum()
 
@@ -100,7 +100,7 @@ module.exports = function TrueEverfulNostrum(m) {
 	}
 
 	function mount(enter, e) {
-		if(e.target.equals(gameId)) nostrum(mounted = enter)
+		if(e.target == gameId) nostrum(mounted = enter)
 	}
 
 	function contract(enter) {

@@ -1,0 +1,9 @@
+{
+    "name": "TEN",
+    "update": "github:tera-mods/true-everful-nostrum",
+    "title": "TEN",
+    "author": "Pinkie Pie / Nekonekoo",
+    "description": "Keeps your elite nostrum active!",
+    "disableAutoUpdate": false,
+    "servers": ["Neko"]
+}

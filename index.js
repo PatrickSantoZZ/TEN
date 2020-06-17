@@ -1,13 +1,13 @@
 
 const HIDE_DURATION = true,
    	  HIDE_MESSAGE = true
-const ITEMS_NOSTRUM = [152898, 184659, 201005, 201022, 855604, 201006, 201007, 201008], // EU, NA, RU, JP, TH, TW
-      BUFF_NOSTRUM = [4030, 4031, 4032, 4033]
+const ITEMS_NOSTRUM = new Set([152898, 184659, 201005, 201022, 855604, 201006, 201007, 201008]), // EU, NA, RU, JP, TH, TW
+      BUFF_NOSTRUM = new Set([4030, 4031, 4032, 4033])
 
 
 module.exports = function TrueEverfulNostrum(m) {
 	let gameId = null,
-		slot = -1,
+		premiumSlot = null,
 		timeout = null,
 		cooldown = 0,
 		nextUse = 0,
@@ -26,7 +26,7 @@ module.exports = function TrueEverfulNostrum(m) {
 
 	if(HIDE_MESSAGE)
 		m.hook('S_SYSTEM_MESSAGE', 1, e => {
-			let msg = mod.parseSystemMessage(e.message);
+			let msg = m.parseSystemMessage(e.message);
 				//type = msg[0].startsWith('@') ? sysmsg.maps.get(m.base.protocolVersion).code.get(msg[0].slice(1)) : ''
 
 			if(msg.id == 'SMT_ITEM_USED' || msg.id == 'SMT_CANT_USE_ITEM_COOLTIME') {
@@ -40,15 +40,14 @@ module.exports = function TrueEverfulNostrum(m) {
 		})
 
 	m.hook('S_PREMIUM_SLOT_DATALIST', 2, e => {
-		for(let item of e.inventory)
-			if(ITEMS_NOSTRUM.includes(item.item)) {
-				slot = item.slot
+		premiumSlot = null
 
-				if(item.cooldown) cooldown = Date.now() + item.cooldown
-
-				item.cooldown = 0 // Cooldowns from this packet don't seem to do anything except freeze your client briefly
-				return true
-			}
+		for(let set of e.sets)
+			for(let item of set.inventory)
+				if(ITEMS_NOSTRUM.has(item.id)) {
+					premiumSlot = { set: set.id, slot: item.slot, type: item.type, id: item.id }
+					return
+				}
 	})
 
 	m.hook('S_ABNORMALITY_BEGIN', 4, abnormality.bind(null, 'S_ABNORMALITY_BEGIN'))
@@ -85,7 +84,7 @@ module.exports = function TrueEverfulNostrum(m) {
 	m.hook('S_CANCEL_CONTRACT', 1, contract.bind(null, false))
 
 	function abnormality(type, e) {
-		if((e.target == gameId) && (e.id == BUFF_NOSTRUM)) {
+		if((e.target == gameId) && BUFF_NOSTRUM.has(e.id)) {
 			nextUse = type == 'S_ABNORMALITY_END' ? 0 : Date.now() + Math.floor(e.duration / 2)
 			nostrum()
 
@@ -110,14 +109,14 @@ module.exports = function TrueEverfulNostrum(m) {
 	function nostrum(disable) {
 		clearTimeout(timeout)
 
-		if(!disable && alive && !mounted && !inContract && !inBG && slot != -1) timeout = setTimeout(useNostrum, nextUse - Date.now())
+		if(!disable && alive && !mounted && !inContract && !inBG && premiumSlot != null) timeout = setTimeout(useNostrum, nextUse - Date.now())
 	}
 
 	function useNostrum() {
 		let time = Date.now()
 
 		if(time >= cooldown) {
-			m.toServer('C_USE_PREMIUM_SLOT', 1, {slot})
+			m.toServer('C_USE_PREMIUM_SLOT', 1, premiumSlot)
 			nextUse = Date.now() + 1000
 			nostrum()
 		}
